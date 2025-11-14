@@ -125,12 +125,15 @@ class MLP:
     return accuracy
 
 
-  def fit(self, train_loader, test_loader, learning_rate, epochs, lambda_l1=0.0, lambda_l2=0.0):
+  def fit(self, train_loader, test_loader, learning_rate, epochs, lambda_l1=0.0, lambda_l2=0.0, reset_history=False):
     start_epoch = 0
 
-    self.accuracy_history = []
-    self.loss_history = []
-    self.test_accuracy_history = []
+    if reset_history:
+      self.accuracy_history = []
+      self.loss_history = []
+      self.test_accuracy_history = []
+
+    total_epochs = len(self.accuracy_history) + epochs
 
     np.random.seed(self.seed)
     self.lambda_l1 = lambda_l1
@@ -178,7 +181,7 @@ class MLP:
       test_accuracy = evaluate_acc(np.array(all_y_true_test), np.array(all_y_pred_test))
       self.test_accuracy_history.append(test_accuracy)
       
-      result_string = f"Epoch {epoch+1}/{epochs}, Loss: {avg_loss:.4f}, Train Accuracy: {avg_accuracy:.4f}, Test Accuracy: {test_accuracy:.4f}"
+      result_string = f"Epoch {len(self.accuracy_history)}/{total_epochs}, Loss: {avg_loss:.4f}, Train Accuracy: {avg_accuracy:.4f}, Test Accuracy: {test_accuracy:.4f}"
       self.results.append(result_string)
       print(result_string)
 
