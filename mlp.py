@@ -29,6 +29,7 @@ class MLP:
     self.z_values = {}
     self.loss_history = []
     self.accuracy_history = []
+    self.val_accuracy_history = []
     self.test_accuracy_history = []
 
     self.results = []
@@ -185,7 +186,67 @@ class MLP:
       self.results.append(result_string)
       print(result_string)
 
+  def fit_validation(self, train_loader, val_loader, learning_rate, epochs, lambda_l1=0.0, lambda_l2=0.0, reset_history=False):
+    start_epoch = 0
 
+    if reset_history:
+      self.accuracy_history = []
+      self.loss_history = []
+      self.val_accuracy_history = []
+
+    total_epochs = len(self.accuracy_history) + epochs
+
+    np.random.seed(self.seed)
+    self.lambda_l1 = lambda_l1
+    self.lambda_l2 = lambda_l2
+    self.learning_rate = learning_rate
+    for epoch in range(start_epoch, epochs):
+      epoch_loss = 0
+      n_batches = 0
+      epoch_accuracy = 0
+
+      for X_batch, y_batch in train_loader:
+        X_batch_np = X_batch.numpy()
+        y_batch_onehot = np.eye(self.output_size)[y_batch.numpy()] # One-hot encode labels
+
+        # Forward propagation
+        AL = self.forward_propagation(X_batch_np)
+
+        # Compute loss and accuracy
+        loss = self.compute_loss(AL, y_batch_onehot)
+        accuracy = self.compute_accuracy(y_batch_onehot, AL)
+        epoch_loss += loss
+        epoch_accuracy += accuracy
+        n_batches += 1
+
+        # Backward propagation
+        self.backward_propagation(AL, X_batch_np, y_batch_onehot)
+
+        # Update parameters
+        self.update_parameters()
+
+      avg_loss = epoch_loss / n_batches
+      avg_accuracy = epoch_accuracy / n_batches
+      self.loss_history.append(avg_loss)
+      self.accuracy_history.append(avg_accuracy)
+
+      # Calculate validation accuracy (for hyperparameters)
+      y_true_vals, y_pred_vals = [], []
+      
+      for X_batch_val, y_batch_val in val_loader:
+        X_batch_val_np = X_batch_val.numpy()
+        y_batch_val_np = y_batch_val.numpy()
+        y_pred_val = self.predict(X_batch_val_np)
+        y_true_vals.extend(y_batch_val_np)
+        y_pred_vals.extend(y_pred_val)
+      
+      val_accuracy = evaluate_acc(np.array(y_true_vals), np.array(y_pred_vals))
+      self.val_accuracy_history.append(val_accuracy)
+
+      result_string = f"Epoch {len(self.accuracy_history)}/{total_epochs}, Validation Accuracy: {val_accuracy:.4f}"
+      self.results.append(result_string)
+      print(result_string)
+    
   def predict(self, X):
     """Make predictions"""
     AL = self.forward_propagation(X)
