@@ -5,6 +5,15 @@ import time
 class CNN(nn.Module):
     def __init__(self, num_classes=10):
         super().__init__()
+        # History variables
+
+        self.train_losses_cnn = []
+        self.train_accuracies_cnn = []
+        self.val_losses_cnn = []
+        self.val_accuracies_cnn = []
+        self.test_accuracies_cnn = []
+
+        # CNN Variables
         self.relu = nn.ReLU()
 
         self.conv1 = nn.Conv2d(1, 32, kernel_size=3, padding=1)
@@ -28,12 +37,9 @@ class CNN(nn.Module):
     
     def train_cnn(self, num_epochs, optimizer, loss_fn, train_loader_cnn, val_loader_cnn, test_loader_cnn, device): 
         self.num_epochs = num_epochs
-        self.train_losses_cnn = []
-        self.train_accuracies_cnn = []
-        self.val_losses_cnn = []
-        self.val_accuracies_cnn = []
-        self.test_accuracies_cnn = []
         start_time = time.time()
+
+        total_epochs = len(self.train_losses_cnn) + num_epochs
 
         for epoch in range(self.num_epochs):
             self.train()
@@ -100,6 +106,6 @@ class CNN(nn.Module):
             test_acc = test_correct / test_total
             self.test_accuracies_cnn.append(test_acc)
 
-            print(f'Epoch {epoch+1}/{self.num_epochs}: Train loss={epoch_loss:.4f}, Train acc={epoch_acc*100:.2f}%, Val loss={val_epoch_loss:.4f}, Val acc={val_epoch_acc*100:.2f}%, Test acc={test_acc*100:.2f}%')
+            print(f'Epoch {len(self.train_losses_cnn)}/{total_epochs}: Train loss={epoch_loss:.4f}, Train acc={epoch_acc*100:.2f}%, Val loss={val_epoch_loss:.4f}, Val acc={val_epoch_acc*100:.2f}%, Test acc={test_acc*100:.2f}%')
 
         self.train_time = time.time() - start_time

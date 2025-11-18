@@ -3,17 +3,21 @@ import torch.nn as nn
 import time
 
 class CustomResNet18(nn.Module):
-    def __init__(self, resnet, num_classes=10):
+    def __init__(self, resnet, fc_layers):
         super(CustomResNet18, self).__init__()
+
+        
+        self.train_losses_cnn = []
+        self.train_accuracies_cnn = []
+        self.val_losses_cnn = []
+        self.val_accuracies_cnn = []
+        self.test_accuracies_cnn = []
+
         # Load the pre-trained ResNet18
         self.resnet = resnet
 
         # Add custom layers
-        self.fc_layers = nn.Sequential(
-            nn.Linear(512, 256),  # ResNet18's last feature map has 512 channels
-            nn.ReLU(),
-            nn.Linear(256, num_classes)
-        )
+        self.fc_layers = fc_layers
 
     def forward(self, x):
         x = self.resnet(x)
@@ -22,12 +26,10 @@ class CustomResNet18(nn.Module):
     
     def train_cnn(self, num_epochs, optimizer, loss_fn, train_loader_cnn, val_loader_cnn, test_loader_cnn, device): 
         self.num_epochs = num_epochs
-        self.train_losses_cnn = []
-        self.train_accuracies_cnn = []
-        self.val_losses_cnn = []
-        self.val_accuracies_cnn = []
-        self.test_accuracies_cnn = []
         start_time = time.time()
+
+        total_epochs = len(self.train_losses_cnn) + num_epochs
+
 
         for epoch in range(self.num_epochs):
             self.train()
@@ -94,6 +96,6 @@ class CustomResNet18(nn.Module):
             test_acc = test_correct / test_total
             self.test_accuracies_cnn.append(test_acc)
 
-            print(f'Epoch {epoch+1}/{self.num_epochs}: Train loss={epoch_loss:.4f}, Train acc={epoch_acc*100:.2f}%, Val loss={val_epoch_loss:.4f}, Val acc={val_epoch_acc*100:.2f}%, Test acc={test_acc*100:.2f}%')
+            print(f'Epoch {len(self.train_losses_cnn)}/{total_epochs}: Train loss={epoch_loss:.4f}, Train acc={epoch_acc*100:.2f}%, Val loss={val_epoch_loss:.4f}, Val acc={val_epoch_acc*100:.2f}%, Test acc={test_acc*100:.2f}%')
 
         self.train_time = time.time() - start_time
